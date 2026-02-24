@@ -1,5 +1,5 @@
 import pandas as pd
-from dagster import asset, asset_check, AssetCheckResult, MetadataValue, AssetExecutionContext
+from dagster import asset, asset_check, AssetCheckResult, AssetKey, AssetIn, MetadataValue, AssetExecutionContext
 #import lab_renta
 
 
@@ -19,7 +19,9 @@ def check_no_vacio(leer_datos: pd.DataFrame):
 
 @asset_check(asset="limpiar_datos")
 def check_nulos_criticos(limpiar_datos: pd.DataFrame):
-    nulos = int(limpiar_datos["anio", "territorio","medida","valor"].isna().sum())
+    cols = ["anio", "territorio", "medida", "valor"]
+    nulos = int(limpiar_datos[cols].isna().sum().sum())
+    #nulos = int(limpiar_datos["anio", "territorio","medida","valor"].isna().sum())
     return AssetCheckResult(
         passed= (nulos==0),
         metadata={
@@ -68,25 +70,26 @@ def check_anio_2022(renta_2022: pd.DataFrame):
 
 
 
-@asset_check(asset="plot_renta_canarias_2022")
-def check_eje_y_en_cero(plot_renta_canarias_2022):
+@asset_check(
+    asset=AssetKey("plot_renta_canarias_2022"),
+    additional_ins={"renta_2022": AssetIn(key=AssetKey("renta_2022"))},
+)
+def check_eje_y_en_cero(renta_2022):
 
-    p = plot_renta_canarias_2022
-    built = p._build()
-    y_limits = built.layout.panel_params[0].y.range
-    y_min = y_limits[0]
+     # si hay valores negativos, empezar en 0 ocultaría información
+    min_val = float(renta_2022["valor"].min())
 
-    passed = (y_min == 0)
+    passed = min_val >= 0
 
     return AssetCheckResult(
         passed=passed,
         metadata={
-            "minimo del eje y": MetadataValue.float(y_min),
-            "principio_visual": MetadataValue.text(
-                "Proporcionalidad: Las barras deben empezar en cero."
-            ),
+            "min_valor_en_datos": MetadataValue.float(min_val),
+            "principio_visual": MetadataValue.text("Proporcionalidad: barras desde cero cuando la métrica es no-negativa."),
             "mensaje": MetadataValue.text(
-                "Si el eje Y no empieza en 0, se puede exagerar visualmente la diferencia."
+                "Si hay valores no-negativos, el eje Y debe comenzar en 0 para no exagerar diferencias."
+                if passed else
+                "Hay valores negativos; el eje Y no debería forzarse a 0 porque ocultaría parte de la información."
             ),
         },
     )

@@ -56,6 +56,7 @@ def plot_renta_canarias_2022 (context: AssetExecutionContext, renta_2022: pd.Dat
 
     p.save("outputs/grafico_renta_Canarias_2022.png", dpi=150, width=12, height=6)
     print("Gráfico guardado en outputs/grafico_renta_Canarias_2022.png")
+    return p
 
 
 
@@ -108,6 +109,7 @@ def plot_renta_municipios_2022(context: AssetExecutionContext, unir_datos: pd.Da
 
     p.save("outputs/grafico_renta_CanariasMunicipio.png", dpi=150, width=12, height=6)
     print("Gráfico guardado en outputs/grafico_renta_CanariasMunicipio.png")
+    return p
 
 
 @asset
@@ -144,4 +146,5 @@ def plot_pensiones_municipios_2022(context: AssetExecutionContext, renta_pension
 
     p.save("outputs/grafico_renta_CanariasMunicipioPensiones.png", dpi=150, width=12, height=6)
     print("Gráfico guardado en outputs/grafico_renta_CanariasMunicipioPensiones.png")
+    return p
 
