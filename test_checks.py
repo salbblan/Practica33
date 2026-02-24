@@ -18,6 +18,20 @@ def check_no_vacio(leer_datos: pd.DataFrame):
 
 
 @asset_check(asset="limpiar_datos")
+def check_nulos_criticos(limpiar_datos: pd.DataFrame):
+    nulos = int(limpiar_datos["anio", "territorio","medida","valor"].isna().sum())
+    return AssetCheckResult(
+        passed= (nulos==0),
+        metadata={
+            "nulos_en_variables_clave": MetadataValue.int(nulos),
+            "explicacion": MetadataValue.text(
+                "Comprobamos que no hay huecos inesperados"
+            ),
+        },
+    )
+
+
+@asset_check(asset="limpiar_datos")
 def check_normalizacion_datos(limpiar_datos: pd.DataFrame):
     datos_territorio = (limpiar_datos["territorio"] == limpiar_datos["territorio"].str.strip().str.lower()).all()
     datos_medida = (limpiar_datos["medida"] == limpiar_datos["medida"].str.strip().str.lower()).all()
@@ -35,6 +49,10 @@ def check_normalizacion_datos(limpiar_datos: pd.DataFrame):
         },
     )
 
+
+
+
+
 @asset_check(asset="renta_2022")
 def check_anio_2022(renta_2022: pd.DataFrame):
     anios = sorted(renta_2022["anio"].unique().tolist()) if "anio" in renta_2022.columns else []
@@ -44,6 +62,31 @@ def check_anio_2022(renta_2022: pd.DataFrame):
         passed=passed,
         metadata={
             "anios_detectados": MetadataValue.text(str(anios)),
-            "explicacion": MetadataValue.text("Filtramos por el año 2022."),
+            "explicacion": MetadataValue.text("Filtramos por el año."),
+        },
+    )
+
+
+
+@asset_check(asset="plot_renta_canarias_2022")
+def check_eje_y_en_cero(plot_renta_canarias_2022):
+
+    p = plot_renta_canarias_2022
+    built = p._build()
+    y_limits = built.layout.panel_params[0].y.range
+    y_min = y_limits[0]
+
+    passed = (y_min == 0)
+
+    return AssetCheckResult(
+        passed=passed,
+        metadata={
+            "minimo del eje y": MetadataValue.float(y_min),
+            "principio_visual": MetadataValue.text(
+                "Proporcionalidad: Las barras deben empezar en cero."
+            ),
+            "mensaje": MetadataValue.text(
+                "Si el eje Y no empieza en 0, se puede exagerar visualmente la diferencia."
+            ),
         },
     )
