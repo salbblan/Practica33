@@ -30,5 +30,6 @@ Thumbs.db
 
 # Dagster temp
 .tmp_dagster_home_7ino3q_x/
+.tmp_dagster_home_*
 
 # Carpeta outputs
